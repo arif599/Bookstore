@@ -1,13 +1,39 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Register
+    Sign in
 {% endblock %}
 
 {% block body %}
     <form method="POST" action="">
-        Email: <input type="email" name="email"> <br>
-        Password: <input type="password" name="password"> <br>
-        <input type="submit">
-    </form>
+        <div class="container" style="margin: auto; width: 30%;">
+            <div class="text-center">
+                <label for="signin"><h1>Please sign in</h1></label>
+            </div>
+            <div class="form-group">
+            <label for="email">Email address:</label>
+            <input type="email" class="form-control" name="email" placeholder="email" required value="{{session['email'] if session['remember_me']}}">
+            </div>
+            <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" name="password" placeholder="password" required value="{{session['password'] if session['password']}}">
+            </div>
+            <div>
+                {% if session["remember_me"] %}
+                    <div class="text-center">
+                        <input type="checkbox" name="checkbox" checked>
+                        <label>Remember me</label>
+                    </div>
+                {% else %}
+                    <div class="text-center">
+                        <input type="checkbox" name="checkbox">
+                        <label>Remember me</label>
+                    </div>
+                {% endif %}
+            </div>
+            <br>
+            <button type="submit" class="btn btn-lg btn-primary btn-block">Submit</button>
+            </div>
+        </div>
+    </form> 
 {% endblock %}

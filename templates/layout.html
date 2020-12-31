@@ -8,10 +8,46 @@
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='main.css') }}>
-
         <title>{% block title %}{% endblock %}</title>
     </head>
     <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="/">Bookstore</a>
+            <!--if user.islogged-->
+            <div class="collapse navbar-collapse">
+              <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <li class="nav-item">
+                  <a class="nav-link" href="/home">Home</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/users">Users</a>
+                </li>
+              </ul>
+              <div>
+                {% if session["logged_in"] %}
+                  <a href="/profile"><button class="btn btn-light" type="submit">Profile</button></a>
+                  <a href="/logout"><button class="btn btn-light" type="submit">Log out</button></a>
+                {% else %}
+                  <a href="/login"><button class="btn btn-light" href="" type="submit">Login</button></a>
+                  <a href="/register"><button class="btn btn-light" type="submit">Sign up</button></a>
+                {% endif %}
+              </div>
+            </div>
+          </nav>
+
+        <div class="container mt-3 mx-auto">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+          {% endwith %}
+        </div>
         {% block body %}{% endblock %}
         
         <!-- Optional JavaScript -->
