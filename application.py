@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session
+from flask import Flask, render_template, request, redirect, flash, url_for, session, make_response, jsonify
 from flask_mysqldb import MySQL
 from user import User
 import json
+import requests
+import time
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "asdf16hik124"
 
@@ -14,10 +17,54 @@ app.config["MYSQL_DB"] = db["mysql_db"]
 mysql = MySQL(app)
 
 
-@app.route("/")
-@app.route("/home")
-def home():        
-    return render_template("home.html")
+@app.route("/", methods=["POST", "GET"])
+@app.route("/home", methods=["POST", "GET"])
+def home():
+    if request.method == "POST":
+        
+        if request.form.get("load_next", False) == "Load More":
+            session["display_next"] = 6
+            session["display_start"] += 6
+            url_parameters = {
+            #"key" : "AIzaSyBuc-RoTyhaqKP0LWUrJ0OTiX-G0O_aodc",
+            "q" : session["q"],
+            "maxResults" : session["display_next"], # change to 30
+            "startIndex" : session["display_start"]
+            }
+        else:
+            search = request.form["search"]
+            session["q"] = search
+            session["display_next"] = 6
+            session["display_start"] = 0
+            url_parameters = {
+                #"key" : "AIzaSyBuc-RoTyhaqKP0LWUrJ0OTiX-G0O_aodc",
+                "q" : search,
+                "maxResults" : session["display_next"], # change to 30
+                "startIndex" : session["display_start"]
+            }
+            
+        response = requests.get("https://www.googleapis.com/books/v1/volumes", params=url_parameters)
+        print(response.url)
+        response_dict = response.json()
+
+        no_more = False
+        for i in range(session["display_start"], session["display_next"]):
+            try:
+                items = response_dict['items']
+                try:
+                    items[i]['volumeInfo']['imageLinks']['thumbnail']
+                except:
+                    items[i]['volumeInfo']['imageLinks'] = None
+            except:
+                # flash("No more books", category="warning")
+                # passed = False
+                no_more = True
+                session["display_next"] = i
+                break
+           
+        return render_template("home.html", response_dict=response_dict, display_next=session["display_next"], display_start=session["display_start"], search=session["q"], no_more=no_more)
+    else:
+        return render_template("home.html", response_dict=None, search=None)
 
 @app.route("/register", methods=["POST", "GET"])
 def register(): 
@@ -119,5 +166,6 @@ def logout():
     return redirect("/home")
 
     cur.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
