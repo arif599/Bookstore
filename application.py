@@ -22,25 +22,31 @@ mysql = MySQL(app)
 def home():
     if request.method == "POST":
         
-        if request.form.get("load_next", False) == "Load More":
-            session["display_next"] = 6
-            session["display_start"] += 6
+        if request.form.get("load_next", False) == "Load Next":
+            session["start_index"] += 15
             url_parameters = {
             #"key" : "AIzaSyBuc-RoTyhaqKP0LWUrJ0OTiX-G0O_aodc",
             "q" : session["q"],
-            "maxResults" : session["display_next"], # change to 30
-            "startIndex" : session["display_start"]
+            "maxResults" : 15, # change to 30
+            "startIndex" : session["start_index"]
+            }
+        elif request.form.get("load_prev", False) == "Load Prev":
+            session["start_index"] -= 15
+            url_parameters = {
+            #"key" : "AIzaSyBuc-RoTyhaqKP0LWUrJ0OTiX-G0O_aodc",
+            "q" : session["q"],
+            "maxResults" : 15, # change to 30
+            "startIndex" : session["start_index"]
             }
         else:
             search = request.form["search"]
             session["q"] = search
-            session["display_next"] = 6
-            session["display_start"] = 0
+            session["start_index"] = 0
             url_parameters = {
                 #"key" : "AIzaSyBuc-RoTyhaqKP0LWUrJ0OTiX-G0O_aodc",
                 "q" : search,
-                "maxResults" : session["display_next"], # change to 30
-                "startIndex" : session["display_start"]
+                "maxResults" : 15, # change to 30
+                "startIndex" : session["start_index"]
             }
             
         response = requests.get("https://www.googleapis.com/books/v1/volumes", params=url_parameters)
@@ -48,21 +54,21 @@ def home():
         response_dict = response.json()
 
         no_more = False
-        for i in range(session["display_start"], session["display_next"]):
+        for i in range(15):
             try:
-                items = response_dict['items']
+                item = response_dict['items'][i]
                 try:
-                    items[i]['volumeInfo']['imageLinks']['thumbnail']
+                    item['volumeInfo']['imageLinks']['thumbnail']
                 except:
-                    items[i]['volumeInfo']['imageLinks'] = None
+                    item['volumeInfo']['imageLinks'] = None
             except:
                 # flash("No more books", category="warning")
                 # passed = False
                 no_more = True
-                session["display_next"] = i
+                session["start_index"] = i
                 break
            
-        return render_template("home.html", response_dict=response_dict, display_next=session["display_next"], display_start=session["display_start"], search=session["q"], no_more=no_more)
+        return render_template("home.html", response_dict=response_dict, search=session["q"], no_more=no_more)
     else:
         return render_template("home.html", response_dict=None, search=None)
 
@@ -166,6 +172,16 @@ def logout():
     return redirect("/home")
 
     cur.close()
+
+
+@app.route("/<id>")
+def book(id):
+    response = requests.get(f"https://www.googleapis.com/books/v1/volumes/{id}")
+    print(response.url)
+    response_dict = response.json()
+    title = response_dict["volumeInfo"]["title"]
+
+    return render_template("book.html", title=title)
 
 if __name__ == "__main__":
     app.run(debug=True)
